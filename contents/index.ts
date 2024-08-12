@@ -10,7 +10,8 @@ function translatePage(targetLanguage: string) {
   elements.forEach((element, index) => {
     if (
       element.childNodes.length === 1 &&
-      element.childNodes[0].nodeType === Node.TEXT_NODE
+      element.childNodes[0].nodeType === Node.TEXT_NODE && 
+      !isInsidePreTag(element)
     ) {
       const originalText = element.textContent?.trim()
       if (originalText  && needsTranslation(originalText)) {
@@ -100,6 +101,19 @@ function needsTranslation(text: string): boolean {
   if (text.length === 1 && !/[a-zA-Z]/.test(text)) return false
   return true
 }
+
+// 添加这个新函数来检查元素是否在 pre 标签内
+function isInsidePreTag(element: Element): boolean {
+  let parent = element.parentElement
+  while (parent) {
+    if (parent.tagName.toLowerCase() === 'pre') {
+      return true
+    }
+    parent = parent.parentElement
+  }
+  return false
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "translatePage") {
     translatePage(request.language)
