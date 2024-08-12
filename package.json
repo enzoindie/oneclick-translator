@@ -1,8 +1,8 @@
 {
-  "name": "plasmo-demo",
-  "displayName": "Plasmo demo",
+  "name": "oneclick-translator",
+  "displayName": "OneClick Translator",
   "version": "0.0.1",
-  "description": "A basic Plasmo extension.",
+  "description": "A WebPage Translator.",
   "author": "Plasmo Corp. <foss@plasmo.com>",
   "scripts": {
     "dev": "plasmo dev",
@@ -10,6 +10,7 @@
     "package": "plasmo package"
   },
   "dependencies": {
+    "@plasmohq/storage": "^1.11.0",
     "plasmo": "0.88.0",
     "react": "18.2.0",
     "react-dom": "18.2.0"

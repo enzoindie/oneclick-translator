@@ -1,4 +1,8 @@
 import { useState, useEffect } from "react"
+import { Storage } from "@plasmohq/storage"
+
+const storage = new Storage()
+const storageKey = "lastSelectedLanguage"
 import "./style.css" // 确保创建并导入这个 CSS 文件
 import Logo from "data-base64:~assets/icon.png"
 const languages = [
@@ -28,24 +32,62 @@ function IndexPopup() {
   const [targetLanguage, setTargetLanguage] = useState('zh-Hans')
 
   useEffect(() => {
-    // 组件加载时设置默认语言
-    setTargetLanguage(getDefaultLanguage());
+    const getStorage = async () => {
+      const lastSelectedLanguage = await storage.get(storageKey) // "value"
+      if (lastSelectedLanguage) {
+        console.log('result.lastSelectedLanguage',lastSelectedLanguage)
+        setTargetLanguage(lastSelectedLanguage);
+      } else {
+        // 如果没有存储的语言，则使用默认语言
+        const defaultLang = getDefaultLanguage();
+        console.log('defaultLang',defaultLang)
+        
+        // 将默认语言保存到存储中
+        setTargetLanguage(lastSelectedLanguage);
+      }
+    }
+     getStorage()
+   
   }, []);
   
   const handleTranslate = async () => {
-    setIsTranslating(true)
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      chrome.tabs.sendMessage(
-        tabs[0].id, 
-        { action: "translatePage", language: targetLanguage },
-        (response) => {
-          if (response.success) {
-            setIsTranslating(false)
-          }
+    setIsTranslating(true);
+    try {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (!tabs[0] || !tabs[0].id) {
+          console.error('无法获取当前标签页');
+          setIsTranslating(false);
+          return;
         }
-      )
-    })
-  }
+  
+        chrome.tabs.sendMessage(
+          tabs[0].id,
+          { action: "translatePage", language: targetLanguage },
+          (response) => {
+            console.log('收到响应:', response);
+            if (chrome.runtime.lastError) {
+              console.error('发送消息时出错:', chrome.runtime.lastError);
+            } else if (response && response.success) {
+              console.log('翻译成功');
+            } else {
+              console.warn('收到意外的响应');
+            }
+            setIsTranslating(false);
+          }
+        );
+      });
+    } catch (error) {
+      console.error('翻译过程中发生错误:', error);
+      setIsTranslating(false);
+    }
+  };
+  const handleLanguageChange =async (e) => {
+    const newLanguage = e.target.value;
+    setTargetLanguage(newLanguage);
+    // 将新选择的语言保存到存储中
+    await storage.set(storageKey, newLanguage)
+  
+  };
 
   return (
     <div className="popup-container">
@@ -55,8 +97,8 @@ function IndexPopup() {
       </header>
       <main className="popup-main">
       <select 
-          value={targetLanguage} 
-          onChange={(e) => setTargetLanguage(e.target.value)}
+          value={targetLanguage}  onChange={handleLanguageChange}
+          
           className="language-select"
         >
           {languages.map(lang => (
