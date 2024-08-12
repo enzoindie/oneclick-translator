@@ -62,3 +62,60 @@ h1 {
   background-color: #cccccc;
   cursor: not-allowed;
 }
+
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.translate-button,
+.remove-translation-button {
+  padding: 8px 16px;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.translate-button {
+  background-color: #4CAF50;
+  color: white;
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+.translate-button:hover {
+  background-color: #45a049;
+}
+
+.remove-translation-button {
+  background-color: white;
+  /* color: #f44336; */
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-translation-button:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.remove-translation-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.translate-button:disabled,
+.remove-translation-button:disabled {
+  /* background-color: #cccccc; */
+  /* color: #666666; */
+  cursor: not-allowed;
+}
+
+/* .remove-translation-button:disabled svg {
+  fill: #666666;
+} */

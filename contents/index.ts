@@ -104,5 +104,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "translatePage") {
     translatePage(request.language)
     sendResponse({ success: true })
+  } else if (request.action === "checkTranslation") {
+    const hasTranslation = document.querySelector('[data-translated="true"]') !== null;
+    console.log('hasTranslation',hasTranslation)
+    sendResponse({ hasTranslation });
+  } else if (request.action === "removeTranslation") {
+    clearPreviousTranslations();
+    sendResponse({ success: true });
   }
 })
