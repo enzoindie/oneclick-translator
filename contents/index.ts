@@ -1,65 +1,77 @@
 import {
   clearPreviousTranslations,
-  isInsidePreTag,getTextNodes,
+  getTextNodes,
+  isInlineElement,
   needsTranslation,
   waitForPageLoad
 } from "./lib"
+import { createFloatingButton, updateTranslationStatus, getTranslationStatus,setLoading} from './floatingButton'
+// 用于存储翻译缓存的对象
+let translationCache: { [key: string]: string } = {};
 
+async function translatePage(targetLanguage= 'zh-Hans') {
+  setLoading(true);
+  try {
+  await waitForPageLoad() // 等待页面加载完成
+  clearPreviousTranslations() // 清除之前的翻译
 
-async function translatePage(targetLanguage: string) {
-  await waitForPageLoad();
-  clearPreviousTranslations();
-
-  const textNodes = getTextNodes();
-  const textsToTranslate = [];
-  const nodeMap = new Map();
-
+  const textNodes = getTextNodes()
+  const textsToTranslate = []
+  const nodeMap = new Map()
   textNodes.forEach((node, index) => {
     const text = node.textContent?.trim();
     if (text && needsTranslation(text, node.parentElement)) {
-      textsToTranslate.push(text);
-      nodeMap.set(textsToTranslate.length - 1, node);
+      let parentElement = node.parentElement;
+      
+      // 向上查找直到找到非内联元素的父元素
+      while (parentElement && isInlineElement(parentElement)) {
+        parentElement = parentElement.parentElement;
+      }
+
+      if (parentElement) {
+        const fullText = parentElement.textContent?.trim();
+        if (fullText && !textsToTranslate.includes(fullText)) {
+          textsToTranslate.push(fullText);
+          nodeMap.set(textsToTranslate.length - 1, parentElement);
+        }
+      } else {
+        // 如果没有找到合适的父元素，按原来的方式处理
+        textsToTranslate.push(text);
+        nodeMap.set(textsToTranslate.length - 1, node);
+      }
     }
   });
-
   if (textsToTranslate.length === 0) {
-    console.log("没有找到需要翻译的文本");
-    return;
+    console.log("没有找到需要翻译的文本")
+    return
   }
 
-  console.log(`总共需要翻译 ${textsToTranslate.length} 个文本元素`);
+  console.log(`总共需要翻译 ${textsToTranslate.length} 个文本元素`)
 
-  const batchSize = 100;
+  const batchSize = 100
   for (let i = 0; i < textsToTranslate.length; i += batchSize) {
-    const batch = textsToTranslate.slice(i, i + batchSize);
-    console.log(`开始翻译第 ${i / batchSize + 1} 批，共 ${batch.length} 个文本元素`);
+    const batch = textsToTranslate.slice(i, i + batchSize)
+    console.log(
+      `开始翻译第 ${i / batchSize + 1} 批，共 ${batch.length} 个文本元素`
+    )
 
     try {
-      const translatedBatch = await sendTranslationRequest(batch, targetLanguage);
-      applyTranslations(translatedBatch, nodeMap, i);
+      const translatedBatch = await sendTranslationRequest(
+        batch,
+        targetLanguage
+      )
+      applyTranslations(translatedBatch, nodeMap, i)
     } catch (error) {
-      console.error(`翻译第 ${i / batchSize + 1} 批时出错:`, error);
+      console.error(`翻译第 ${i / batchSize + 1} 批时出错:`, error)
     }
   }
-
-  console.log("所有翻译完成");
+  updateTranslationStatus(true);
+  console.log("所有翻译完成")
+} finally {
+  setLoading(false);
 }
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "translatePage") {
-    translatePage(request.language).then(() => {
-      sendResponse({ success: true })
-    })
-    return true // 表示我们将异步发送响应
-  } else if (request.action === "checkTranslation") {
-    const hasTranslation =
-      document.querySelector('[data-translated="true"]') !== null
-    console.log("hasTranslation", hasTranslation)
-    sendResponse({ hasTranslation })
-  } else if (request.action === "removeTranslation") {
-    clearPreviousTranslations()
-    sendResponse({ success: true })
-  }
-})
+
+}
 
 function sendTranslationRequest(
   texts: string[],
@@ -87,15 +99,22 @@ function sendTranslationRequest(
   })
 }
 
-function applyTranslations(translatedTexts: string[], nodeMap: Map<number, Node>, offset: number) {
+function applyTranslations(
+  translatedTexts: string[],
+  nodeMap: Map<number, Node>,
+  offset: number
+) {
   translatedTexts.forEach((translatedText, index) => {
     const node = nodeMap.get(offset + index);
-    if (node && node.parentElement && !node.parentElement.hasAttribute('data-translated')) {
-      const parentElement = node.parentElement;
-      
-      const lineBreak = document.createElement("br");
-      lineBreak.setAttribute("data-translated", "true");
-      lineBreak.setAttribute("data-translation-added", "true");
+    if (
+      node &&
+      node.parentElement &&
+      !node.parentElement.hasAttribute("data-translated")
+    ) {
+      const parentElement =
+        node.nodeType === Node.ELEMENT_NODE
+          ? (node as Element)
+          : node.parentElement;
 
       const translatedSpan = document.createElement("span");
       translatedSpan.textContent = translatedText;
@@ -109,11 +128,24 @@ function applyTranslations(translatedTexts: string[], nodeMap: Map<number, Node>
       translatedSpan.setAttribute("data-translated", "true");
       translatedSpan.setAttribute("data-translation-added", "true");
 
-      parentElement.appendChild(lineBreak);
       parentElement.appendChild(translatedSpan);
-      
+
       // 标记父元素为已翻译
-      parentElement.setAttribute('data-translated', 'true');
+      parentElement.setAttribute("data-translated", "true");
     }
   });
 }
+// 在页面加载完成后创建悬浮按钮
+window.addEventListener('load', () => createFloatingButton(translatePage, clearPreviousTranslations));
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "translatePage") {
+    translatePage(request.language).then(() => sendResponse({ success: true }));
+    return true; // 表示会异步发送响应
+  } else if (request.action === "removeTranslation") {
+    clearPreviousTranslations();
+    sendResponse({ success: true });
+  } else if (request.action === "checkTranslation") {
+    sendResponse({ hasTranslation: getTranslationStatus() });
+  }
+});

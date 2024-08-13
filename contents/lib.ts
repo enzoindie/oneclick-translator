@@ -1,3 +1,4 @@
+import { updateTranslationStatus } from './floatingButton'
 export function insertTranslation(element: Element, translatedText: string) {
   // 创建换行元素
   const lineBreak = document.createElement("br")
@@ -22,10 +23,16 @@ export function insertTranslation(element: Element, translatedText: string) {
 }
 
 // 添加一个辅助函数来检查文本是否需要翻译
-export function needsTranslation(text: string, element: Element|null): boolean {
+export function needsTranslation(
+  text: string,
+  element: Element | null
+): boolean {
   // 检查元素是否已经被翻译
-  if (element?.hasAttribute('data-translated') || element?.querySelector('[data-translated="true"]')) {
-    return false;
+  if (
+    element?.hasAttribute("data-translated") ||
+    element?.querySelector('[data-translated="true"]')
+  ) {
+    return false
   }
   if (text.length <= 2) {
     return false
@@ -59,14 +66,21 @@ export function isInsidePreTag(element: Element): boolean {
   }
   return false
 }
-export function clearPreviousTranslations() {
-  // 移除我们添加的翻译元素
-  const translatedElements = document.querySelectorAll('span[data-translated="true"], br[data-translated="true"]');
-  translatedElements.forEach(element => element.remove());
 
-  // 移除原始元素上的 data-translated 属性
-  const originalElements = document.querySelectorAll('[data-translated="true"]');
-  originalElements.forEach(element => element.removeAttribute('data-translated'));
+export function isInlineElement(element: Element): boolean {
+  const inlineElements = ["strong", "b", "em", "i", "code", "small"]
+  return inlineElements.includes(element.tagName.toLowerCase())
+}
+
+export function clearPreviousTranslations() {
+  updateTranslationStatus(false);
+  // 删除所有带有 data-translation-added 属性的元素
+  const addedElements = document.querySelectorAll('[data-translation-added]');
+  addedElements.forEach(el => el.remove());
+
+  // 移除所有带有 data-translated 属性的元素上的该属性
+  const translatedElements = document.querySelectorAll('[data-translated]');
+  translatedElements.forEach(el => el.removeAttribute('data-translated'));
 }
 
 export function waitForPageLoad(): Promise<void> {
@@ -84,62 +98,75 @@ export function getTextNodes() {
     document.body,
     NodeFilter.SHOW_TEXT,
     {
-      acceptNode: function(node) {
+      acceptNode: function (node) {
         // 排除脚本、样式和pre标签中的文本
-        if (node.parentElement?.tagName === 'SCRIPT' || 
-            node.parentElement?.tagName === 'STYLE' || 
-            node.parentElement?.tagName === 'PRE' ||
-            node.parentElement?.tagName === 'CODE' ||
-            node.parentElement?.closest('pre, code')) {
-          return NodeFilter.FILTER_REJECT;
+        if (
+          node.parentElement?.tagName === "SCRIPT" ||
+          node.parentElement?.tagName === "STYLE" ||
+          node.parentElement?.tagName === "PRE" ||
+          node.parentElement?.tagName === "CODE" ||
+          node.parentElement?.closest("pre, code")
+        ) {
+          return NodeFilter.FILTER_REJECT
         }
         // 排除空白文本节点
-        if (node.textContent?.trim() === '') {
-          return NodeFilter.FILTER_REJECT;
+        if (node.textContent?.trim() === "") {
+          return NodeFilter.FILTER_REJECT
         }
-        return NodeFilter.FILTER_ACCEPT;
+        return NodeFilter.FILTER_ACCEPT
       }
     }
-  );
+  )
 
-  const textNodes = [];
-  let currentNode;
-  while (currentNode = walker.nextNode()) {
-    textNodes.push(currentNode);
+  const textNodes = []
+  let currentNode
+  while ((currentNode = walker.nextNode())) {
+    textNodes.push(currentNode)
   }
-  return textNodes;
+  return textNodes
 }
 
-const PARAGRAPH_TAGS = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'TD', 'TH'];
-const NON_TRANSLATABLE_TAGS = ['SCRIPT', 'STYLE', 'PRE', 'CODE'];
+const PARAGRAPH_TAGS = [
+  "P",
+  "H1",
+  "H2",
+  "H3",
+  "H4",
+  "H5",
+  "H6",
+  "LI",
+  "TD",
+  "TH"
+]
+const NON_TRANSLATABLE_TAGS = ["SCRIPT", "STYLE", "PRE", "CODE"]
 
 export function getTranslatableElements() {
-  const elements = [];
+  const elements = []
   const walker = document.createTreeWalker(
     document.body,
     NodeFilter.SHOW_ELEMENT,
     {
-      acceptNode: function(node) {
+      acceptNode: function (node) {
         if (node.nodeType === Node.ELEMENT_NODE) {
-          const element = node as Element;
+          const element = node as Element
           if (PARAGRAPH_TAGS.includes(element.tagName)) {
             // 检查是否在不可翻译的标签内
-            if (element.closest(NON_TRANSLATABLE_TAGS.join(','))) {
-              return NodeFilter.FILTER_REJECT;
+            if (element.closest(NON_TRANSLATABLE_TAGS.join(","))) {
+              return NodeFilter.FILTER_REJECT
             }
-            return NodeFilter.FILTER_ACCEPT;
+            return NodeFilter.FILTER_ACCEPT
           }
         }
-        return NodeFilter.FILTER_SKIP;
+        return NodeFilter.FILTER_SKIP
       }
     }
-  );
+  )
 
-  let currentNode;
-  while (currentNode = walker.nextNode()) {
+  let currentNode
+  while ((currentNode = walker.nextNode())) {
     if (currentNode.nodeType === Node.ELEMENT_NODE) {
-      elements.push(currentNode as Element);
+      elements.push(currentNode as Element)
     }
   }
-  return elements;
+  return elements
 }
