@@ -18,13 +18,13 @@ function getTranslationStatus(): boolean {
   return Object.keys(translationCache).length > 0
 }
 
-async function translatePage(targetLanguage = "zh-Hans") {
+async function translatePage(targetLanguage = "zh-Hans",refreshTranslation: boolean = false) {
   setLoading(true)
   try {
     await waitForPageLoad() // 等待页面加载完成
 
     // 检查是否已经翻译过
-    if (getTranslationStatus()) {
+    if (getTranslationStatus()&&!refreshTranslation) {
       console.log("页面已经翻译过，使用缓存的翻译结果")
       applyTranslationsFromCache()
       return
@@ -165,7 +165,7 @@ function checkUrlChange() {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "translatePage") {
-    translatePage(request.language).then(() => sendResponse({ success: true }))
+    translatePage(request.language,request.refreshTranslation).then(() => sendResponse({ success: true }))
     return true // 表示会异步发送响应
   } else if (request.action === "removeTranslation") {
     clearPreviousTranslations()

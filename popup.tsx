@@ -31,6 +31,7 @@ function IndexPopup() {
   const [isTranslating, setIsTranslating] = useState(false)
   const [targetLanguage, setTargetLanguage] = useState('zh-Hans')
   const [hasTranslation, setHasTranslation] = useState(false)
+  const [shouldRefreshTranslation, setShouldRefreshTranslation] = useState(false)
 
   useEffect(() => {
     const getStorage = async () => {
@@ -82,7 +83,7 @@ function IndexPopup() {
         setHasTranslation(true);
         chrome.tabs.sendMessage(
           tabs[0].id,
-          { action: "translatePage", language: targetLanguage },
+          { action: "translatePage", language: targetLanguage ,refreshTranslation: shouldRefreshTranslation },
           (response) => {
             console.log('收到响应:', response);
             if (chrome.runtime.lastError) {
@@ -92,6 +93,7 @@ function IndexPopup() {
             } else {
               console.warn('收到意外的响应');
             }
+            setShouldRefreshTranslation(false) // 重置刷新标志
             setIsTranslating(false);
           }
         );
@@ -103,9 +105,13 @@ function IndexPopup() {
   };
   const handleLanguageChange = async (e) => {
     const newLanguage = e.target.value;
-    setTargetLanguage(newLanguage);
-    // 将新选择的语言保存到存储中
-    await storage.set(storageKey, newLanguage)
+    if (newLanguage !== targetLanguage) {
+      setTargetLanguage(newLanguage);
+      // 将新选择的语言保存到存储中
+      await storage.set(storageKey, newLanguage)
+      // 设置标志以指示需要刷新翻译
+      setShouldRefreshTranslation(true)
+    }
 
   };
   const handleRemoveTranslation = () => {
