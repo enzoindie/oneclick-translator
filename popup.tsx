@@ -6,6 +6,7 @@ const storageKey = "lastSelectedLanguage"
 import "./style.css" // 确保创建并导入这个 CSS 文件
 import Logo from "data-base64:~assets/icon.png"
 const languages = [
+  { code: '', name: 'Select' }, // 添加"请选择"选项
   { code: 'zh-Hans', name: '中文（简体）' },
   { code: 'es', name: 'Español' },
   { code: 'ja', name: '日本語' },
@@ -29,7 +30,7 @@ function getDefaultLanguage(): string {
 
 function IndexPopup() {
   const [isTranslating, setIsTranslating] = useState(false)
-  const [targetLanguage, setTargetLanguage] = useState('zh-Hans')
+  const [targetLanguage, setTargetLanguage] = useState('')
   const [hasTranslation, setHasTranslation] = useState(false)
   const [shouldRefreshTranslation, setShouldRefreshTranslation] = useState(false)
 
@@ -39,19 +40,13 @@ function IndexPopup() {
       if (lastSelectedLanguage) {
         console.log('result.lastSelectedLanguage', lastSelectedLanguage)
         setTargetLanguage(lastSelectedLanguage);
-      } else {
-        // 如果没有存储的语言，则使用默认语言
-        const defaultLang = getDefaultLanguage();
-        console.log('defaultLang', defaultLang)
-
-        // 将默认语言保存到存储中
-        setTargetLanguage(lastSelectedLanguage);
       }
     }
     getStorage()
     // 检查当前页面是否有翻译
     checkTranslationStatus();
   }, []);
+
   const checkTranslationStatus = () => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0] && tabs[0].id) {
@@ -71,6 +66,10 @@ function IndexPopup() {
     });
   };
   const handleTranslate = async () => {
+    if (!targetLanguage) {
+      alert('select language')
+      return
+    }
     setIsTranslating(true);
 
     try {
@@ -83,7 +82,7 @@ function IndexPopup() {
         setHasTranslation(true);
         chrome.tabs.sendMessage(
           tabs[0].id,
-          { action: "translatePage", language: targetLanguage ,refreshTranslation: shouldRefreshTranslation },
+          { action: "translatePage", language: targetLanguage, refreshTranslation: shouldRefreshTranslation },
           (response) => {
             console.log('收到响应:', response);
             if (chrome.runtime.lastError) {
@@ -108,9 +107,11 @@ function IndexPopup() {
     if (newLanguage !== targetLanguage) {
       setTargetLanguage(newLanguage);
       // 将新选择的语言保存到存储中
-      await storage.set(storageKey, newLanguage)
-      // 设置标志以指示需要刷新翻译
-      setShouldRefreshTranslation(true)
+      if (newLanguage) {
+        await storage.set(storageKey, newLanguage)
+        // 设置标志以指示需要刷新翻译
+        setShouldRefreshTranslation(true)
+      }
     }
 
   };

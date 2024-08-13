@@ -1,11 +1,16 @@
+// 像素
+import { Storage } from "@plasmohq/storage"
+
 let isTranslated = false
 let isLoading = false
 let floatingButton: HTMLButtonElement | null = null
 let isDragging = false
 let startX: number, startY: number, startLeft: number, startTop: number
 let hasMoved = false
-const MOVE_THRESHOLD = 5 // 像素
+const MOVE_THRESHOLD = 5
 
+const storage = new Storage()
+const storageKey = "lastSelectedLanguage"
 export function createFloatingButton(
   translatePage: () => Promise<void>,
   removeTranslation: () => void
@@ -63,7 +68,7 @@ function startDragging(e: MouseEvent | TouchEvent) {
   }
   startLeft = floatingButton.offsetLeft
   startTop = floatingButton.offsetTop
-  floatingButton.style.transition = 'none'
+  floatingButton.style.transition = "none"
 }
 
 function drag(e: MouseEvent | TouchEvent) {
@@ -79,28 +84,35 @@ function drag(e: MouseEvent | TouchEvent) {
   }
   const deltaX = clientX - startX
   const deltaY = clientY - startY
-  
+
   if (Math.abs(deltaX) > MOVE_THRESHOLD || Math.abs(deltaY) > MOVE_THRESHOLD) {
     hasMoved = true
   }
 
   floatingButton.style.left = `${startLeft + deltaX}px`
   floatingButton.style.top = `${startTop + deltaY}px`
-  floatingButton.style.right = 'auto'
-  floatingButton.style.bottom = 'auto'
+  floatingButton.style.right = "auto"
+  floatingButton.style.bottom = "auto"
 }
 
 function stopDragging() {
   if (!floatingButton) return
   isDragging = false
-  floatingButton.style.transition = 'background-color 0.3s ease'
+  floatingButton.style.transition = "background-color 0.3s ease"
 }
 async function toggleTranslation(
   translatePage: () => Promise<void>,
   removeTranslation: () => void
 ) {
   if (!floatingButton || isLoading) return
+  // 获取上次选择的语言
+  const lastSelectedLanguage = await storage.get(storageKey)
 
+  if (!lastSelectedLanguage) {
+    // 如果没有上次选择的语言,打开弹出窗口
+    chrome.runtime.sendMessage({ action: "openPopup" })
+    return
+  }
   if (isTranslated) {
     setLoading(true)
     try {
@@ -153,16 +165,16 @@ function getButtonIcon(translated: boolean): string {
     <path d="M7 2h1"></path>
     <path d="M22 22l-5-10-5 10"></path>
     <path d="M14 18h6"></path>
-  </svg>`;
+  </svg>`
 
   if (translated) {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
       ${baseIcon}
       <circle cx="18" cy="18" r="6" fill="#4CAF50" />
       <path d="M15 18l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    </svg>`;
+    </svg>`
   } else {
-    return baseIcon;
+    return baseIcon
   }
 }
 export function setLoading(loading: boolean) {
@@ -185,10 +197,9 @@ style.textContent = `
 `
 document.head.appendChild(style)
 
-
 function getLoadingIcon(): string {
   return `
     <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z" opacity=".2"/>
     <path d="M12 4a8 8 0 0 1 7.89 6.7A1.53 1.53 0 0 0 21.38 12 10 10 0 1 0 12 22a9.9 9.9 0 0 0 5.62-1.72 1.53 1.53 0 0 0 .5-2.1 1.52 1.52 0 0 0-2.1-.5A7 7 0 1 1 12 5" fill="currentColor"/>
-  `;
+  `
 }

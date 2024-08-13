@@ -11,6 +11,7 @@ import {
   sendTranslationRequest,
   waitForPageLoad
 } from "./lib"
+
 let currentUrl = window.location.href;
 // 用于存储翻译缓存的对象
 let translationCache: { [key: string]: string } = {}
@@ -119,6 +120,7 @@ function applyTranslationsFromCache() {
     }
   })
 }
+
 function clearPreviousTranslations() {
   console.log("clearPreviousTranslations")
   updateTranslationStatus(false)

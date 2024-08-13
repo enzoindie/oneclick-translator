@@ -1,8 +1,8 @@
 {
   "name": "oneclick-translator",
-  "displayName": "OneClick Translator",
+  "displayName": "OneClick Translator - Instant Web Translation",
   "version": "0.0.1",
-  "description": "A WebPage Translator.",
+  "description": "Fast and accurate webpage translator. Instantly translate entire webpages or selected text with one click. Supports multiple languages. Boost reading efficiency and break language barriers. Keywords: translate, 翻译, traduire, übersetzen, traducir, tradurre, 翻訳, 번역",
   "author": "Plasmo Corp. <foss@plasmo.com>",
   "scripts": {
     "dev": "plasmo dev",

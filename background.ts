@@ -39,5 +39,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ error: error.message });
       });
     return true; // 表示将异步发送响应
+  }else  if (request.action === "openPopup") {
+    console.log("openPopup")
+    chrome.action.openPopup()
   }
 });
