@@ -1,131 +1,98 @@
 body {
-  font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f0f0f0;
-}
-.language-popup {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
 }
 .popup-container {
   width: 300px;
-  padding: 16px;
-  background-color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
 .popup-header {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .logo {
   width: 32px;
   height: 32px;
-  margin-right: 12px;
+  margin-right: 10px;
+  object-fit: contain;
 }
 
 h1 {
   font-size: 18px;
   margin: 0;
-  color: #333;
 }
 
 .popup-main {
   display: flex;
   flex-direction: column;
+  gap: 15px;
 }
 
 .language-select {
-  margin-bottom: 12px;
-  padding: 8px;
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 16px;
   border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
+  border-radius: 6px;
+  background-color: white;
+  appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: all 0.3s ease;
 }
 
-.translate-button {
-  padding: 10px 16px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+.language-select:hover {
+  border-color: #888;
 }
 
-.translate-button:hover {
-  background-color: #45a049;
-}
-
-.translate-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
+.language-select:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.25);
 }
 
 .button-container {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
+  margin-top: 20px;
 }
 
-.translate-button,
-.remove-translation-button {
-  padding: 8px 16px;
-  font-size: 14px;
+.remove-translation-button,
+.translate-button {
+  padding: 12px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.remove-translation-button {
+  background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+  color: #333;
+}
+
+.remove-translation-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
 }
 
 .translate-button {
-  background-color: #4CAF50;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
   color: white;
-  flex-grow: 1;
-  margin-right: 10px;
 }
 
-.translate-button:hover {
-  background-color: #45a049;
+.translate-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
 }
 
-.remove-translation-button {
-  background-color: white;
-  /* color: #f44336; */
-  padding: 3px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.remove-translation-button:hover {
-  background-color: rgba(244, 67, 54, 0.1);
-}
-
-.remove-translation-button svg {
-  width: 18px;
-  height: 18px;
-}
-
-.translate-button:disabled,
-.remove-translation-button:disabled {
-  /* background-color: #cccccc; */
-  /* color: #666666; */
+button:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
-
-/* .remove-translation-button:disabled svg {
-  fill: #666666;
-} */
