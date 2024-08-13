@@ -1,4 +1,5 @@
-import { updateTranslationStatus } from './floatingButton'
+import { updateTranslationStatus } from "./floatingButton"
+
 export function insertTranslation(element: Element, translatedText: string) {
   // 创建换行元素
   const lineBreak = document.createElement("br")
@@ -72,15 +73,67 @@ export function isInlineElement(element: Element): boolean {
   return inlineElements.includes(element.tagName.toLowerCase())
 }
 
-export function clearPreviousTranslations() {
-  updateTranslationStatus(false);
-  // 删除所有带有 data-translation-added 属性的元素
-  const addedElements = document.querySelectorAll('[data-translation-added]');
-  addedElements.forEach(el => el.remove());
+export function sendTranslationRequest(
+  texts: string[],
+  targetLanguage: string
+): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      {
+        action: "translateBatch",
+        texts: texts,
+        targetLanguage: targetLanguage
+      },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError)
+        } else if (response.error) {
+          reject(new Error(response.error))
+        } else if (Array.isArray(response.translatedTexts)) {
+          resolve(response.translatedTexts)
+        } else {
+          reject(new Error("收到意外的响应格式"))
+        }
+      }
+    )
+  })
+}
 
-  // 移除所有带有 data-translated 属性的元素上的该属性
-  const translatedElements = document.querySelectorAll('[data-translated]');
-  translatedElements.forEach(el => el.removeAttribute('data-translated'));
+export function applyTranslations(
+  translatedTexts: string[],
+  nodeMap: Map<number, Node>,
+  offset: number
+) {
+  translatedTexts.forEach((translatedText, index) => {
+    const node = nodeMap.get(offset + index)
+    if (
+      node &&
+      node.parentElement &&
+      !node.parentElement.hasAttribute("data-translated")
+    ) {
+      const parentElement =
+        node.nodeType === Node.ELEMENT_NODE
+          ? (node as Element)
+          : node.parentElement
+
+      const translatedSpan = document.createElement("span")
+      translatedSpan.textContent = translatedText
+
+      const computedStyle = window.getComputedStyle(parentElement)
+      translatedSpan.style.color = computedStyle.color
+      translatedSpan.style.fontSize = computedStyle.fontSize
+      translatedSpan.style.fontFamily = computedStyle.fontFamily
+
+      translatedSpan.style.display = "block"
+      translatedSpan.setAttribute("data-translated", "true")
+      translatedSpan.setAttribute("data-translation-added", "true")
+
+      parentElement.appendChild(translatedSpan)
+
+      // 标记父元素为已翻译
+      parentElement.setAttribute("data-translated", "true")
+    }
+  })
 }
 
 export function waitForPageLoad(): Promise<void> {
