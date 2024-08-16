@@ -1,4 +1,3 @@
-// 像素
 import { Storage } from "@plasmohq/storage"
 
 let isTranslated = false
@@ -105,11 +104,11 @@ async function toggleTranslation(
   removeTranslation: () => void
 ) {
   if (!floatingButton || isLoading) return
-  // 获取上次选择的语言
+  // get last selected language
   const lastSelectedLanguage = await storage.get(storageKey)
 
   if (!lastSelectedLanguage) {
-    // 如果没有上次选择的语言,打开弹出窗口
+    // if no last selected language, open popup
     chrome.runtime.sendMessage({ action: "openPopup" })
     return
   }
@@ -187,7 +186,6 @@ export function updateTranslationStatus(status: boolean) {
   updateButtonState()
 }
 
-// 添加一个样式来处理加载图标的旋转动画
 const style = document.createElement("style")
 style.textContent = `
   @keyframes spin {

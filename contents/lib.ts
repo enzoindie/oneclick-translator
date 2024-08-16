@@ -1,15 +1,14 @@
-import { updateTranslationStatus } from "./floatingButton"
 
 export function insertTranslation(element: Element, translatedText: string) {
-  // 创建换行元素
+  // create line break element
   const lineBreak = document.createElement("br")
   lineBreak.setAttribute("data-translated", "true")
 
-  // 创建翻译文本的 span 元素
+  // create translated text span element
   const translatedSpan = document.createElement("span")
   translatedSpan.textContent = translatedText
 
-  // 获取原始元素的计算样式
+  // get original element's computed style
   const computedStyle = window.getComputedStyle(element)
   translatedSpan.style.color = computedStyle.color
   translatedSpan.style.fontSize = computedStyle.fontSize
@@ -18,17 +17,17 @@ export function insertTranslation(element: Element, translatedText: string) {
   translatedSpan.style.display = "block"
   translatedSpan.setAttribute("data-translated", "true")
 
-  // 在原始元素后添加换行和翻译文本
+  // add line break and translated text after original element
   element.parentNode.insertBefore(lineBreak, element.nextSibling)
   element.parentNode.insertBefore(translatedSpan, lineBreak.nextSibling)
 }
 
-// 添加一个辅助函数来检查文本是否需要翻译
+// add a helper function to check if text needs translation
 export function needsTranslation(
   text: string,
   element: Element | null
 ): boolean {
-  // 检查元素是否已经被翻译
+  // check if element has been translated
   if (
     element?.hasAttribute("data-translated") ||
     element?.querySelector('[data-translated="true"]')
@@ -38,25 +37,23 @@ export function needsTranslation(
   if (text.length <= 2) {
     return false
   }
-  // 检查是否为纯数字
+  // check if it's pure number
   if (/^\d+$/.test(text)) {
-    console.log("纯数字", text)
     return false
   }
-  // 检查是否为纯符号（这里定义的符号可能需要根据实际需求调整）
+  // check if it's pure symbol
   if (/^[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+$/.test(text)) {
-    console.log("纯符号", text)
     return false
   }
-  // 如果文本长度为1，且不是字母，则不翻译
+  // if text length is 1 and not a letter, don't translate
   if (text.length === 1 && !/[a-zA-Z]/.test(text)) {
-    console.log("单个字符且不是字母", text)
+    console.log("single character and not a letter", text)
     return false
   }
   return true
 }
 
-// 添加这个新函数来检查元素是否在 pre 标签内
+// add this new function to check if element is inside pre tag
 export function isInsidePreTag(element: Element): boolean {
   let parent = element.parentElement
   while (parent) {
@@ -92,7 +89,7 @@ export function sendTranslationRequest(
         } else if (Array.isArray(response.translatedTexts)) {
           resolve(response.translatedTexts)
         } else {
-          reject(new Error("收到意外的响应格式"))
+          reject(new Error("received unexpected response format"))
         }
       }
     )
@@ -130,7 +127,7 @@ export function applyTranslations(
 
       parentElement.appendChild(translatedSpan)
 
-      // 标记父元素为已翻译
+      // mark parent element as translated
       parentElement.setAttribute("data-translated", "true")
     }
   })
@@ -152,7 +149,7 @@ export function getTextNodes() {
     NodeFilter.SHOW_TEXT,
     {
       acceptNode: function (node) {
-        // 排除脚本、样式和pre标签中的文本
+        // exclude script, style and text in pre tag
         if (
           node.parentElement?.tagName === "SCRIPT" ||
           node.parentElement?.tagName === "STYLE" ||
@@ -162,7 +159,7 @@ export function getTextNodes() {
         ) {
           return NodeFilter.FILTER_REJECT
         }
-        // 排除空白文本节点
+        // exclude blank text node
         if (node.textContent?.trim() === "") {
           return NodeFilter.FILTER_REJECT
         }
@@ -203,7 +200,7 @@ export function getTranslatableElements() {
         if (node.nodeType === Node.ELEMENT_NODE) {
           const element = node as Element
           if (PARAGRAPH_TAGS.includes(element.tagName)) {
-            // 检查是否在不可翻译的标签内
+            // check if it's inside non-translatable tags
             if (element.closest(NON_TRANSLATABLE_TAGS.join(","))) {
               return NodeFilter.FILTER_REJECT
             }

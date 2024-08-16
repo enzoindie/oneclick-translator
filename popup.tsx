@@ -3,10 +3,10 @@ import { Storage } from "@plasmohq/storage"
 
 const storage = new Storage()
 const storageKey = "lastSelectedLanguage"
-import "./style.css" // 确保创建并导入这个 CSS 文件
+import "./style.css"
 import Logo from "data-base64:~assets/icon.png"
 const languages = [
-  { code: '', name: 'Select' }, // 添加"请选择"选项
+  { code: '', name: 'Select' }, 
   { code: 'zh-Hans', name: '中文（简体）' },
   { code: 'es', name: 'Español' },
   { code: 'ja', name: '日本語' },
@@ -18,15 +18,6 @@ const languages = [
   { code: 'it', name: 'Italiano' },
   { code: 'pt', name: 'Português' },
 ];
-
-function getDefaultLanguage(): string {
-  const browserLang = navigator.language || (navigator.languages && navigator.languages[0]);
-  const langCode = browserLang.split('-')[0]; // 获取主要语言代码
-
-  // 查找匹配的语言代码
-  const matchedLang = languages.find(lang => lang.code.startsWith(langCode));
-  return matchedLang ? matchedLang.code : 'en'; // 如果没有匹配的,默认使用英语
-}
 
 function IndexPopup() {
   const [isTranslating, setIsTranslating] = useState(false)
@@ -43,7 +34,7 @@ function IndexPopup() {
       }
     }
     getStorage()
-    // 检查当前页面是否有翻译
+    // check current tab translation status
     checkTranslationStatus();
   }, []);
 
@@ -75,7 +66,7 @@ function IndexPopup() {
     try {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (!tabs[0] || !tabs[0].id) {
-          console.error('无法获取当前标签页');
+          console.error('get tab failed');
           setIsTranslating(false);
           return;
         }
@@ -84,21 +75,14 @@ function IndexPopup() {
           tabs[0].id,
           { action: "translatePage", language: targetLanguage, refreshTranslation: shouldRefreshTranslation },
           (response) => {
-            console.log('收到响应:', response);
-            if (chrome.runtime.lastError) {
-              console.error('发送消息时出错:', chrome.runtime.lastError);
-            } else if (response && response.success) {
-              console.log('翻译成功');
-            } else {
-              console.warn('收到意外的响应');
-            }
-            setShouldRefreshTranslation(false) // 重置刷新标志
+            console.log('get response:', response);
+            setShouldRefreshTranslation(false) // reset refresh flag
             setIsTranslating(false);
           }
         );
       });
     } catch (error) {
-      console.error('翻译过程中发生错误:', error);
+      console.error('translate process failed:', error);
       setIsTranslating(false);
     }
   };
@@ -106,10 +90,10 @@ function IndexPopup() {
     const newLanguage = e.target.value;
     if (newLanguage !== targetLanguage) {
       setTargetLanguage(newLanguage);
-      // 将新选择的语言保存到存储中
+      // save language to storage
       if (newLanguage) {
         await storage.set(storageKey, newLanguage)
-        // 设置标志以指示需要刷新翻译
+        // set flag to refresh translation
         setShouldRefreshTranslation(true)
       }
     }

@@ -13,7 +13,7 @@ import {
 } from "./lib"
 
 let currentUrl = window.location.href;
-// 用于存储翻译缓存的对象
+// as cache object
 let translationCache: { [key: string]: string } = {}
 function getTranslationStatus(): boolean {
   return Object.keys(translationCache).length > 0
@@ -22,16 +22,15 @@ function getTranslationStatus(): boolean {
 async function translatePage(targetLanguage = "zh-Hans",refreshTranslation: boolean = false) {
   setLoading(true)
   try {
-    await waitForPageLoad() // 等待页面加载完成
+    await waitForPageLoad() // wait page load
 
-    // 检查是否已经翻译过
+    // check if already translated
     if (getTranslationStatus()&&!refreshTranslation) {
-      console.log("页面已经翻译过，使用缓存的翻译结果")
       applyTranslationsFromCache()
       return
     }
 
-    clearPreviousTranslations() // 清除之前的翻译
+    clearPreviousTranslations() // remove previous translations
 
     const textNodes = getTextNodes()
     const textsToTranslate = []
@@ -41,7 +40,7 @@ async function translatePage(targetLanguage = "zh-Hans",refreshTranslation: bool
       if (text && needsTranslation(text, node.parentElement)) {
         let parentElement = node.parentElement
 
-        // 向上查找直到找到非内联元素的父元素
+        // find parent element until non-inline element
         while (parentElement && isInlineElement(parentElement)) {
           parentElement = parentElement.parentElement
         }
@@ -53,24 +52,23 @@ async function translatePage(targetLanguage = "zh-Hans",refreshTranslation: bool
             nodeMap.set(textsToTranslate.length - 1, parentElement)
           }
         } else {
-          // 如果没有找到合适的父元素，按原来的方式处理
+          // if no suitable parent element, handle it as before
           textsToTranslate.push(text)
           nodeMap.set(textsToTranslate.length - 1, node)
         }
       }
     })
     if (textsToTranslate.length === 0) {
-      console.log("没有找到需要翻译的文本")
       return
     }
 
-    console.log(`总共需要翻译 ${textsToTranslate.length} 个文本元素`)
+    console.log(`total ${textsToTranslate.length} texts to translate`)
 
     const batchSize = 100
     for (let i = 0; i < textsToTranslate.length; i += batchSize) {
       const batch = textsToTranslate.slice(i, i + batchSize)
       console.log(
-        `开始翻译第 ${i / batchSize + 1} 批，共 ${batch.length} 个文本元素`
+        `start translating batch ${i / batchSize + 1}, total ${batch.length} texts`
       )
 
       try {
@@ -79,22 +77,22 @@ async function translatePage(targetLanguage = "zh-Hans",refreshTranslation: bool
           targetLanguage
         )
         applyTranslations(translatedBatch, nodeMap, i)
-        // 将翻译结果存入缓存
+        // save translation to cache
         batch.forEach((text, index) => {
           translationCache[text] = translatedBatch[index]
         })
       } catch (error) {
-        console.error(`翻译第 ${i / batchSize + 1} 批时出错:`, error)
+        console.error(`error translating batch ${i / batchSize + 1}:`, error)
       }
     }
     updateTranslationStatus(true)
-    console.log("所有翻译完成")
+   
   } finally {
     setLoading(false)
   }
 }
 
-// 从缓存应用翻译
+// apply translations from cache
 function applyTranslationsFromCache() {
   const textNodes = getTextNodes()
   textNodes.forEach((node) => {
@@ -124,28 +122,28 @@ function applyTranslationsFromCache() {
 function clearPreviousTranslations() {
   console.log("clearPreviousTranslations")
   updateTranslationStatus(false)
-  // 删除所有带有 data-translation-added 属性的元素
+  // remove all elements with data-translation-added attribute
   const addedElements = document.querySelectorAll("[data-translation-added]")
   addedElements.forEach((el) => el.remove())
 
-  // 移除所有带有 data-translated 属性的元素上的该属性
+  // remove data-translated attribute from all elements with data-translated attribute
   const translatedElements = document.querySelectorAll("[data-translated]")
   translatedElements.forEach((el) => el.removeAttribute("data-translated"))
 }
 
-// 在页面加载完成后创建悬浮按钮
+// create floating button after page load
 window.addEventListener("load", () => {
   createFloatingButton(translatePage, clearPreviousTranslations);
-  currentUrl = window.location.href; // 初始化当前 URL
+  currentUrl = window.location.href; 
 });
 
-// 监听 popstate 事件
+// listen popstate event
 window.addEventListener('popstate', checkUrlChange);
 
-// 监听 hashchange 事件
+// listen hashchange event
 window.addEventListener('hashchange', checkUrlChange);
 
-// 使用 MutationObserver 监听 DOM 变化
+// listen DOM changes using MutationObserver
 const observer = new MutationObserver(() => {
   checkUrlChange();
 });
@@ -168,7 +166,7 @@ function checkUrlChange() {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "translatePage") {
     translatePage(request.language,request.refreshTranslation).then(() => sendResponse({ success: true }))
-    return true // 表示会异步发送响应
+    return true // indicate async response
   } else if (request.action === "removeTranslation") {
     clearPreviousTranslations()
     sendResponse({ success: true })

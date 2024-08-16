@@ -1,9 +1,8 @@
-const subscriptionKey = '90e39224c4e34a67b61c8d6bb5536349';
-const endpoint = 'https://api.cognitive.microsofttranslator.com/';
+const subscriptionKey = process.env.PLASMO_PUBLIC_MICROSOFTTRANSLATOR_API_KEY;
+const endpoint = process.env.PLASMO_PUBLIC_MICROSOFTTRANSLATOR_ENDPOINT;
 
 async function translateTexts(texts: string[], to: string = 'zh-Hans'): Promise<string[]> {
   const url = `${endpoint}/translate?api-version=3.0&to=${to}`;
-  
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -23,7 +22,7 @@ async function translateTexts(texts: string[], to: string = 'zh-Hans'): Promise<
     const result = await response.json();
     return result.map(item => item.translations[0].text);
   } catch (error) {
-    console.error('翻译出错:', error);
+    console.error('translate failed:', error);
     throw error;
   }
 }
@@ -35,10 +34,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ translatedTexts: translatedTexts });
       })
       .catch(error => {
-        console.error('翻译失败:', error);
+        console.error('translate failed:', error);
         sendResponse({ error: error.message });
       });
-    return true; // 表示将异步发送响应
+    return true;
   }else  if (request.action === "openPopup") {
     console.log("openPopup")
     chrome.action.openPopup()
